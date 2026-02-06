@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trading Bot - Reports</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .report-list {
+            list-style: none;
+        }
+
+        .report-item {
+            background: white;
+            margin: 10px 0;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .report-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-item a {
+            text-decoration: none;
+            color: #333;
+            display: block;
+        }
+
+        .report-date {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .report-desc {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+
+        .emoji {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="emoji">📊</div>
+        <h1>AI Trading Bot</h1>
+        <p class="subtitle">자동 매매 리포트</p>
+
+        <ul class="report-list" id="reportList">
+            <li class="loading">리포트를 불러오는 중...</li>
+        </ul>
+    </div>
+
+    <script>
+        // GitHub Pages에서 자동으로 날짜별 폴더 스캔
+        async function loadReports() {
+            const reportList = document.getElementById('reportList');
+
+            // 최근 30일간의 날짜 생성
+            const reports = [];
+            const today = new Date();
+
+            for (let i = 0; i < 30; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                const dateStr = date.toISOString().split('T')[0];
+
+                // 각 날짜의 리포트 확인
+                try {
+                    const response = await fetch(`${dateStr}/report.html`, { method: 'HEAD' });
+                    if (response.ok) {
+                        reports.push({
+                            date: dateStr,
+                            url: `${dateStr}/report.html`
+                        });
+                    }
+                } catch (e) {
+                    // 파일이 없으면 무시
+                }
+            }
+
+            // 리포트 목록 표시
+            if (reports.length === 0) {
+                reportList.innerHTML = '<li class="loading">아직 생성된 리포트가 없습니다. 월요일을 기다려주세요! 🚀</li>';
+            } else {
+                reportList.innerHTML = reports.map(report => `
+                    <li class="report-item">
+                        <a href="${report.url}">
+                            <div class="report-date">📈 ${report.date}</div>
+                            <div class="report-desc">데일리 트레이딩 리포트 보기</div>
+                        </a>
+                    </li>
+                `).join('');
+            }
+        }
+
+        loadReports();
+    </script>
+</body>
+
+</html>
