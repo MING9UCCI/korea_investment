@@ -7,6 +7,8 @@ import config
 from kis_api import KisApi
 import strategy
 import market_schedule
+import ai_analyst
+import discord_notifier
 
 # Setup Logging
 logging.basicConfig(
