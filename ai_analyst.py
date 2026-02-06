@@ -47,22 +47,22 @@ def generate_briefing(market_type, portfolio_summary):
     market_news = get_news(market_keywords, max_results=5)
     
     prompt = f"""
-    You are a professional financial analyst writing a daily briefing.
-    Date: {today}
-    Market: {market_type}
+    당신은 프로페셔널한 주식 시장 애널리스트입니다. 오늘의 시장 브리핑을 작성해주세요.
+    날짜: {today}
+    시장: {market_type} (KR=한국, US=미국, GLOBAL=전체)
     
-    [My Portfolio Summary]
+    [내 포트폴리오 요약]
     {json.dumps(portfolio_summary, indent=2)}
     
-    [Latest Market News]
+    [최신 주요 뉴스]
     {market_news}
     
-    Write a concise briefing (in Korean) that covers:
-    1. Global/Local market sentiment based on news.
-    2. Review of my portfolio performance.
-    3. Key things to watch today.
+    다음 내용을 포함하여 읽기 편한 한국어 브리핑을 작성해주세요:
+    1. **시장 동향**: 뉴스 기반 글로벌/국내 시장 분위기 요약.
+    2. **포트폴리오 점검**: 현재 수익률 평가 및 조언.
+    3. **오늘의 관전 포인트**: 투자자가 유의해야 할 사항.
     
-    Format nicely with Markdown.
+    이모지(📊, 🚀, 💡 등)를 적절히 사용하여 가독성을 높이고, 마크다운 형식으로 깔끔하게 작성하세요.
     """
     
     try:

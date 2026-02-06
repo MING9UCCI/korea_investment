@@ -56,15 +56,34 @@ def generate_report(results):
     
     
     # Send Discord Notification
-    msg = f"📊 **Daily Trading Report ({today})**\n"
+    # Send Discord Notification
+    msg = f"📊 **[{today}] 데일리 트레이딩 리포트** 📊\n\n"
     has_action = False
+    
+    # Group results by market or action type for better readability
+    executed_trades = []
+    failed_trades = []
+    
     for res in results:
         if "Executed" in res['action']:
-            has_action = True
-            emoji = "🔴" if "BUY" in res['signal'] else "🔵"
-            msg += f"{emoji} {res['name']}: {res['action']} ({res['reason'][:30]}...)\n"
+            executed_trades.append(res)
+        elif "Failed" in res['action']:
+            failed_trades.append(res)
+
+    if executed_trades:
+        has_action = True
+        msg += "**✅ 체결 내역**\n"
+        for res in executed_trades:
+            emoji = "🔴 매수" if "BUY" in res['signal'] else "🔵 매도"
+            msg += f"> {emoji} **{res['name']}**\n"
+            msg += f"> `사유` {res['reason']}\n\n"
+            
+    if failed_trades:
+        # Only report failures if needed, or keep it silent to reduce noise
+        pass 
             
     if has_action:
+        msg += f"\n👉 [상세 리포트 확인하기](https://github.com/Minwoo/korea_investment/actions)"
         discord_notifier.send_message(msg, type="trading")
 
 def main():
@@ -78,89 +97,129 @@ def main():
     logging.info(f"Current Balance Summary: {balance_summary}")
     # --- Domestic Trading ---
     if config.MARKET_TYPE in ["DOMESTIC", "BOTH"]:
-        logging.info("=== Starting Domestic Market Trading ===")
-        # Determine Domestic Targets
-        if config.USE_MARKET_SCAN:
-            logging.info(f"Scanning Domestic Market for Top {config.SCAN_LIMIT} Volume Stocks...")
-            domestic_targets = kis.get_volume_rank(limit=config.SCAN_LIMIT)
-            logging.info(f"Found {len(domestic_targets)} domestic targets.")
-        else:
-            domestic_targets = config.TARGET_CODES
-            logging.info(f"Using fixed domestic targets: {domestic_targets}")
-        
-        for code in domestic_targets:
-            logging.info(f"[Domestic] Analyzing {code}...")
-            # 1. Get History
-            df = kis.get_market_price_history(code)
-            if df.empty:
-                logging.error(f"Failed to fetch history for {code}")
-                continue
+        if market_schedule.is_kr_market_open():
+            logging.info("=== Starting Domestic Market Trading ===")
+            # Determine Domestic Targets
+            if config.USE_MARKET_SCAN:
+                logging.info(f"Scanning Domestic Market for Top {config.SCAN_LIMIT} Volume Stocks...")
+                domestic_targets = kis.get_volume_rank(limit=config.SCAN_LIMIT)
+                logging.info(f"Found {len(domestic_targets)} domestic targets.")
+            else:
+                domestic_targets = config.TARGET_CODES
+                logging.info(f"Using fixed domestic targets: {domestic_targets}")
+            
+            for code in domestic_targets:
+                logging.info(f"[Domestic] Analyzing {code}...")
+                # Get Name for AI
+                curr_price = kis.get_current_price(code)
+                name = curr_price['name'] if curr_price else code
                 
-            # 2. Analyze
-            signal, reason = strategy.analyze_stock(df)
-            logging.info(f"[{code}] Signal: {signal} | Reason: {reason}")
-            
-            action = "None"
-            
-            # 3. Execute
-            if signal == "BUY":
-                if kis.buy_order(code, 1):
-                    action = "Executed BUY"
-                else:
-                    action = "Failed BUY"
-            elif signal == "SELL":
-                # Check holdings logic here (simplified)
-                if kis.sell_order(code, 1):
-                     action = "Executed SELL"
-                else:
-                    action = "Failed SELL"
-            
-            results.append({
-                "market": "KR", "code": code, "signal": signal, "reason": reason, "action": action
-            })
-            time.sleep(0.2)
+                # 1. Get History
+                df = kis.get_market_price_history(code)
+                if df.empty:
+                    logging.error(f"Failed to fetch history for {code}")
+                    continue
+                    
+                # 2. Analyze (Technical)
+                signal, reason = strategy.analyze_stock(df)
+                
+                # 3. Analyze (AI) - Only if signal is active to save quotas
+                ai_score = 0
+                ai_reason = "Skipped"
+                if signal in ["BUY", "SELL"]:
+                    logging.info(f"Technical signal found for {name}. Asking AI...")
+                    ai_score, ai_reason = ai_analyst.analyze_sentiment(name)
+                    reason += f" | AI: {ai_reason}"
+                    
+                    # Hybrid Logic: Overrule if AI is strongly opposing
+                    if signal == "BUY" and ai_score < -20:
+                        signal = "HOLD"
+                        reason += " (AI Veto: Negative News)"
+                    elif signal == "SELL" and ai_score > 20:
+                        pass # Let technical sell proceed even with generic positive news
+                
+                logging.info(f"[{name}] Signal: {signal} | AI Score: {ai_score}")
+                
+                action = "None"
+                
+                # 4. Execute
+                if signal == "BUY":
+                    if kis.buy_order(code, 1):
+                        action = "Executed BUY"
+                    else:
+                        action = "Failed BUY"
+                elif signal == "SELL":
+                    if kis.sell_order(code, 1):
+                         action = "Executed SELL"
+                    else:
+                        action = "Failed SELL"
+                
+                results.append({
+                    "market": "KR", "code": code, "name": name, "signal": signal, "ai_score": ai_score, "reason": reason, "action": action
+                })
+                time.sleep(0.5)
+        else:
+             logging.info("=== Domestic Market is Closed (Holiday/Weekend) ===")
 
     # --- US Trading ---
     if config.MARKET_TYPE in ["US", "BOTH"]:
-        logging.info("=== Starting US Market Trading ===")
-        us_targets = config.US_TARGET_CODES
-        logging.info(f"Using US targets: {us_targets}")
-        
-        for code in us_targets:
-            logging.info(f"[US] Analyzing {code}...")
-            # 1. Get History
-            # Default to NASDAQ (NAS) for tech stocks in list.
-            # Ideally config should map code to exchange.
-            excd = "NAS" 
-            if code == "NYS": excd = "NYS" # Simple hack if needed, but for now allow all NAS
+        if market_schedule.is_us_market_open():
+            logging.info("=== Starting US Market Trading ===")
+            us_targets = config.US_TARGET_CODES
+            logging.info(f"Using US targets: {us_targets}")
             
-            df = kis.get_overseas_history(code, excd)
-            if df.empty:
-                logging.error(f"Failed to fetch US history for {code}")
-                continue
-            
-            # 2. Analyze
-            signal, reason = strategy.analyze_stock(df)
-            logging.info(f"[{code}] US Signal: {signal} | Reason: {reason}")
-            
-            action = "None"
-            
-            # 3. Execute
-            if signal == "BUY":
-                if kis.buy_overseas_order(code, 1, excd):
-                    action = "Executed US BUY"
-                else:
-                    action = "Failed US BUY"
-            elif signal == "SELL":
-                if kis.sell_overseas_order(code, 1, excd):
-                    action = "Executed US SELL"
-                else:
-                    action = "Failed US SELL"
-            
-            results.append({
-                "market": "US", "code": code, "signal": signal, "reason": reason, "action": action
-            })
-            time.sleep(0.2)
+            for code in us_targets:
+                logging.info(f"[US] Analyzing {code}...")
+                name = code # US tickers are usually the search term
+                
+                # 1. Get History
+                # Default to NASDAQ (NAS) for tech stocks in list.
+                # Ideally config should map code to exchange.
+                excd = "NAS" 
+                if code == "NYS": excd = "NYS" # Simple hack if needed, but for now allow all NAS
+                
+                df = kis.get_overseas_history(code, excd)
+                if df.empty:
+                    logging.error(f"Failed to fetch US history for {code}")
+                    continue
+                
+                # 2. Analyze
+                signal, reason = strategy.analyze_stock(df)
+                
+                # 3. Analyze (AI)
+                ai_score = 0
+                ai_reason = "Skipped"
+                if signal in ["BUY", "SELL"]:
+                    logging.info(f"Technical signal found for {code}. Asking AI...")
+                    ai_score, ai_reason = ai_analyst.analyze_sentiment(code)
+                    reason += f" | AI: {ai_reason}"
+                    
+                    if signal == "BUY" and ai_score < -20:
+                        signal = "HOLD"
+                        reason += " (AI Veto: Negative News)"
+                
+                logging.info(f"[{code}] US Signal: {signal} | AI Score: {ai_score}")
+                
+                action = "None"
+                
+                # 4. Execute
+                if signal == "BUY":
+                    if kis.buy_overseas_order(code, 1, excd):
+                        action = "Executed US BUY"
+                    else:
+                        action = "Failed US BUY"
+                elif signal == "SELL":
+                    if kis.sell_overseas_order(code, 1, excd):
+                        action = "Executed US SELL"
+                    else:
+                        action = "Failed US SELL"
+                
+                results.append({
+                    "market": "US", "code": code, "name": name, "signal": signal, "ai_score": ai_score, "reason": reason, "action": action
+                })
+                time.sleep(0.5)
+        else:
+            logging.info("=== US Market is Closed (Holiday/Weekend) ===")
     
     generate_report(results)
     logging.info("Trading Cycle Completed.")
