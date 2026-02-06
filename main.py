@@ -96,6 +96,10 @@ def main():
     
     # Check Balance
     holdings, balance_summary = kis.check_balance()
+    if not balance_summary and not holdings:
+        logging.error("CRITICAL: Failed to fetch balance. Check API Keys or Account Number.")
+        # Proceeding might be dangerous if we don't know balance, but for now just log
+        
     logging.info(f"Current Balance Summary: {balance_summary}")
     # --- Domestic Trading ---
     if config.MARKET_TYPE in ["DOMESTIC", "BOTH"]:
