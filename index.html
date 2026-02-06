@@ -105,45 +105,39 @@
     </div>
 
     <script>
-        // GitHub Pages에서 자동으로 날짜별 폴더 스캔
+        // GitHub API를 사용해서 실제 리포트 폴더 가져오기
         async function loadReports() {
             const reportList = document.getElementById('reportList');
 
-            // 최근 30일간의 날짜 생성
-            const reports = [];
-            const today = new Date();
+            try {
+                // GitHub API로 reports 폴더의 내용 가져오기
+                const response = await fetch('https://api.github.com/repos/MING9UCCI/korea_investment/contents/reports?ref=gh-pages');
+                const data = await response.json();
 
-            for (let i = 0; i < 30; i++) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
-                const dateStr = date.toISOString().split('T')[0];
+                // 날짜 형식의 폴더만 필터링 (YYYY-MM-DD)
+                const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+                const reportFolders = data
+                    .filter(item => item.type === 'dir' && datePattern.test(item.name))
+                    .map(item => item.name)
+                    .sort()
+                    .reverse(); // 최신순 정렬
 
-                // 각 날짜의 리포트 확인
-                try {
-                    const response = await fetch(`${dateStr}/report.html`, { method: 'HEAD' });
-                    if (response.ok) {
-                        reports.push({
-                            date: dateStr,
-                            url: `${dateStr}/report.html`
-                        });
-                    }
-                } catch (e) {
-                    // 파일이 없으면 무시
+                // 리포트 목록 표시
+                if (reportFolders.length === 0) {
+                    reportList.innerHTML = '<li class="loading">아직 생성된 리포트가 없습니다. 월요일을 기다려주세요! 🚀</li>';
+                } else {
+                    reportList.innerHTML = reportFolders.map(date => `
+                        <li class="report-item">
+                            <a href="${date}/report.html">
+                                <div class="report-date">📈 ${date}</div>
+                                <div class="report-desc">데일리 트레이딩 리포트 보기</div>
+                            </a>
+                        </li>
+                    `).join('');
                 }
-            }
-
-            // 리포트 목록 표시
-            if (reports.length === 0) {
-                reportList.innerHTML = '<li class="loading">아직 생성된 리포트가 없습니다. 월요일을 기다려주세요! 🚀</li>';
-            } else {
-                reportList.innerHTML = reports.map(report => `
-                    <li class="report-item">
-                        <a href="${report.url}">
-                            <div class="report-date">📈 ${report.date}</div>
-                            <div class="report-desc">데일리 트레이딩 리포트 보기</div>
-                        </a>
-                    </li>
-                `).join('');
+            } catch (error) {
+                console.error('리포트 로딩 실패:', error);
+                reportList.innerHTML = '<li class="loading">리포트를 불러오는 중 오류가 발생했습니다. 😢</li>';
             }
         }
 
