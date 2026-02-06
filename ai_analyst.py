@@ -71,6 +71,53 @@ def generate_briefing(market_type, portfolio_summary):
     except Exception as e:
         return f"Briefing generation failed: {e}"
 
+def analyze_sentiment(stock_name):
+    """
+    Analyze sentiment for a single stock based on recent news.
+    
+    Args:
+        stock_name (str): Stock name or ticker symbol
+        
+    Returns:
+        tuple: (score, reason) where score is -100 to +100, reason is explanation
+    """
+    if not model:
+        return 0, "AI Not Configured"
+    
+    # Fetch recent news
+    news = get_news(stock_name, max_results=3)
+    
+    if not news:
+        return 0, "No recent news found"
+    
+    prompt = f"""
+    당신은 주식 시장 뉴스 분석 전문가입니다.
+    다음 뉴스를 분석하여 '{stock_name}' 종목에 대한 감성 점수를 매겨주세요.
+    
+    [최근 뉴스]
+    {news}
+    
+    점수 기준:
+    - +100: 매우 긍정적 (강력한 매수 신호)
+    - +50: 긍정적 (매수 고려)
+    - 0: 중립
+    - -50: 부정적 (매도 고려)
+    - -100: 매우 부정적 (강력한 매도 신호)
+    
+    응답 형식 (JSON만 반환, 다른 텍스트 없이):
+    {{"score": <-100~100 사이 정수>, "reason": "<한 줄 요약>"}}
+    """
+    
+    try:
+        response = model.generate_content(prompt)
+        text = response.text.replace("```json", "").replace("```", "").strip()
+        result = json.loads(text)
+        return result.get("score", 0), result.get("reason", "분석 완료")
+    except Exception as e:
+        logging.error(f"Sentiment analysis failed for {stock_name}: {e}")
+        return 0, f"분석 실패: {str(e)}"
+
+
 def analyze_portfolio(holdings, candidates, balance):
     """
     Analyze the entire portfolio and candidates to decide trades.
