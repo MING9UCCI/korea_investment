@@ -41,8 +41,8 @@ def is_us_market_open():
         logging.info(f"[Market Schedule] US Market Closed: Weekend ({today.strftime('%A')})")
         return False
         
-    # 3. Check Holidays (NYSE specific)
-    us_holidays = holidays.US(markets='NYSE')
+    # 3. Check Holidays (using general US holidays as proxy for NYSE)
+    us_holidays = holidays.US()
     if today in us_holidays:
         logging.info(f"[Market Schedule] US Market Closed: Holiday ({us_holidays.get(today)})")
         return False
