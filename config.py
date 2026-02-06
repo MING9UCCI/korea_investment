@@ -7,9 +7,23 @@ load_dotenv()
 
 # [Brokerage / Account Settings]
 # This bot is designed for 'Korea Investment & Securities' (KIS).
-# You must have a KIS account and Open API Key.
-APP_KEY = os.getenv("KIS_APP_KEY", "YOUR_APP_KEY")
-APP_SECRET = os.getenv("KIS_APP_SECRET", "YOUR_APP_SECRET")
+# Account switching logic:
+
+KIS_MODE = os.getenv("KIS_MODE", "VIRTUAL").upper() # VIRTUAL or REAL
+
+if KIS_MODE == "REAL":
+    APP_KEY = os.getenv("KIS_APP_KEY_REAL", os.getenv("KIS_APP_KEY"))
+    APP_SECRET = os.getenv("KIS_APP_SECRET_REAL", os.getenv("KIS_APP_SECRET"))
+    CANO = os.getenv("KIS_CANO_REAL", os.getenv("KIS_CANO"))
+    ACNT_PRDT_CD = os.getenv("KIS_ACNT_PRDT_CD_REAL", "01")
+    URL_BASE = "https://openapi.koreainvestment.com:9443"
+else:
+    # VIRTUAL
+    APP_KEY = os.getenv("KIS_APP_KEY_VIRTUAL", os.getenv("KIS_APP_KEY"))
+    APP_SECRET = os.getenv("KIS_APP_SECRET_VIRTUAL", os.getenv("KIS_APP_SECRET"))
+    CANO = os.getenv("KIS_CANO_VIRTUAL", os.getenv("KIS_CANO"))
+    ACNT_PRDT_CD = os.getenv("KIS_ACNT_PRDT_CD_VIRTUAL", "01")
+    URL_BASE = "https://openapivts.koreainvestment.com:29443"
 
 # [AI Settings]
 # Google Gemini API Key (Free Tier available)
@@ -21,14 +35,11 @@ DISCORD_WEBHOOK_TRADING = os.getenv("DISCORD_WEBHOOK_TRADING", "")
 DISCORD_WEBHOOK_BRIEFING = os.getenv("DISCORD_WEBHOOK_BRIEFING", "")
 
 # 'Seed Money' is the cash in this account.
-CANO = os.getenv("KIS_CANO", "YOUR_ACCOUNT_NO") # Account Number (8 digits)
-ACNT_PRDT_CD = os.getenv("KIS_ACNT_PRDT_CD", "01") # Account Product Code (usually 01)
+# (CANO, ACNT_PRDT_CD are already defined above based on KIS_MODE)
 
-# API URLs (Real vs Virtual)
-# Use 'VIRTUAL' for paper trading with mock money.
-# Use 'REAL' for actual trading with your real money.
-MODE = os.getenv("KIS_MODE", "VIRTUAL") 
-URL_BASE = "https://openapi.koreainvestment.com:9443" if MODE == "REAL" else "https://openapivts.koreainvestment.com:29443"
+# [API URLs]
+# (URL_BASE is already defined above based on KIS_MODE)
+MODE = KIS_MODE # Alias for backward compatibility
 
 # [Target Settings]
 # Market Type: "DOMESTIC", "US", or "BOTH"

@@ -36,11 +36,20 @@ jobs:
         pip install -r requirements.txt
     - name: Run Trading Bot
       env:
-        KIS_APP_KEY: ${{ secrets.KIS_APP_KEY }}
-        KIS_APP_SECRET: ${{ secrets.KIS_APP_SECRET }}
-        KIS_CANO: ${{ secrets.KIS_CANO }}
-        KIS_ACNT_PRDT_CD: ${{ secrets.KIS_ACNT_PRDT_CD }}
         KIS_MODE: ${{ secrets.KIS_MODE }}
+        
+        # Virtual Account Keys
+        KIS_APP_KEY_VIRTUAL: ${{ secrets.KIS_APP_KEY_VIRTUAL }}
+        KIS_APP_SECRET_VIRTUAL: ${{ secrets.KIS_APP_SECRET_VIRTUAL }}
+        KIS_CANO_VIRTUAL: ${{ secrets.KIS_CANO_VIRTUAL }}
+        KIS_ACNT_PRDT_CD_VIRTUAL: ${{ secrets.KIS_ACNT_PRDT_CD_VIRTUAL }}
+        
+        # Real Account Keys
+        KIS_APP_KEY_REAL: ${{ secrets.KIS_APP_KEY_REAL }}
+        KIS_APP_SECRET_REAL: ${{ secrets.KIS_APP_SECRET_REAL }}
+        KIS_CANO_REAL: ${{ secrets.KIS_CANO_REAL }}
+        KIS_ACNT_PRDT_CD_REAL: ${{ secrets.KIS_ACNT_PRDT_CD_REAL }}
+        
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         DISCORD_WEBHOOK_TRADING: ${{ secrets.DISCORD_WEBHOOK_TRADING }}
         DISCORD_WEBHOOK_BRIEFING: ${{ secrets.DISCORD_WEBHOOK_BRIEFING }}
@@ -53,6 +62,15 @@ jobs:
         git add reports/
         git commit -m "Automated Trading Report [$(date)]" || echo "No changes to commit"
         git push
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./reports
+        keep_files: true  # Keep existing reports
+        user_name: 'Trading Bot'
+        user_email: 'bot@noreply.github.com'
 
   briefing:
     runs-on: ubuntu-latest
@@ -69,11 +87,18 @@ jobs:
         pip install -r requirements.txt
     - name: Run Briefing
       env:
-        KIS_APP_KEY: ${{ secrets.KIS_APP_KEY }}
-        KIS_APP_SECRET: ${{ secrets.KIS_APP_SECRET }}
-        KIS_CANO: ${{ secrets.KIS_CANO }}
-        KIS_ACNT_PRDT_CD: ${{ secrets.KIS_ACNT_PRDT_CD }}
         KIS_MODE: ${{ secrets.KIS_MODE }}
+        
+        # Virtual Keys
+        KIS_APP_KEY_VIRTUAL: ${{ secrets.KIS_APP_KEY_VIRTUAL }}
+        KIS_APP_SECRET_VIRTUAL: ${{ secrets.KIS_APP_SECRET_VIRTUAL }}
+        KIS_CANO_VIRTUAL: ${{ secrets.KIS_CANO_VIRTUAL }}
+        
+        # Real Keys
+        KIS_APP_KEY_REAL: ${{ secrets.KIS_APP_KEY_REAL }}
+        KIS_APP_SECRET_REAL: ${{ secrets.KIS_APP_SECRET_REAL }}
+        KIS_CANO_REAL: ${{ secrets.KIS_CANO_REAL }}
+
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         DISCORD_WEBHOOK_TRADING: ${{ secrets.DISCORD_WEBHOOK_TRADING }}
         DISCORD_WEBHOOK_BRIEFING: ${{ secrets.DISCORD_WEBHOOK_BRIEFING }}

@@ -57,7 +57,8 @@ def generate_report(results):
     
     # Send Discord Notification
     # Send Discord Notification
-    msg = f"📊 **[{today}] 데일리 트레이딩 리포트** 📊\n\n"
+    mode_label = "모의투자" if config.KIS_MODE == "VIRTUAL" else "실전투자"
+    msg = f"📊 **[{today}] 데일리 트레이딩 리포트 ({mode_label})** 📊\n\n"
     has_action = False
     
     # Group results by market or action type for better readability
