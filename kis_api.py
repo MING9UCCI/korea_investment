@@ -10,6 +10,11 @@ class KisApi:
         self.app_key = config.APP_KEY
         self.app_secret = config.APP_SECRET
         self.url_base = config.URL_BASE
+        
+        # Debug Log for Account ID (Masked)
+        masked_cano = config.CANO[:4] + "****" if config.CANO and len(config.CANO) > 4 else "INVALID"
+        print(f"[KisApi] Initializing. Mode: {config.KIS_MODE} | CANO: {masked_cano} | URL: {self.url_base}")
+        
         self.access_token = None
         self.token_file = "token.json"
         self._load_token()
@@ -267,6 +272,10 @@ class KisApi:
             "CTX_AREA_FK": "",
             "CTX_AREA_NK": ""
         }
+        # Validate Account Config
+        if not config.CANO or len(config.CANO) != 8:
+            print(f"ERROR: Invalid Account Number (CANO): {config.CANO}")
+            return [], {}
         
         try:
             res = requests.get(url, headers=headers, params=params)

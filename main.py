@@ -6,6 +6,7 @@ from datetime import datetime
 import config
 from kis_api import KisApi
 import strategy
+import market_schedule
 
 # Setup Logging
 logging.basicConfig(
