@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Environments
+.env
+
+# Token/Logs
+token.json
+trade.log
+daily_report.html
