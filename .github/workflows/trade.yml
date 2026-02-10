@@ -12,10 +12,13 @@ on:
     - cron: '0 13-21 * * 1-5'
     
     # Briefing Schedule
-    # Morning Briefing (08:30 KST -> 23:30 UTC previous day)
-    - cron: '30 23 * * 1-5'
-    # Evening Briefing (16:00 KST -> 07:00 UTC)
-    - cron: '0 7 * * 1-5'
+    # Morning Briefing (08:50 KST -> 23:50 UTC previous day)
+    # Mon-Fri KST = Sun-Thu UTC
+    - cron: '50 23 * * 0-4'
+    
+    # Market Close Summary (15:30 KST -> 06:30 UTC)
+    # Mon-Fri KST = Mon-Fri UTC
+    - cron: '30 6 * * 1-5'
   workflow_dispatch: # Allow manual run button
 
 permissions:
@@ -58,6 +61,21 @@ jobs:
         DISCORD_WEBHOOK_TRADING: ${{ secrets.DISCORD_WEBHOOK_TRADING }}
         DISCORD_WEBHOOK_BRIEFING: ${{ secrets.DISCORD_WEBHOOK_BRIEFING }}
       run: python main.py
+
+    - name: Run Daily Summary (15:30 KST)
+      if: github.event.schedule == '30 6 * * 1-5' || github.event_name == 'workflow_dispatch'
+      env:
+        KIS_MODE: ${{ secrets.KIS_MODE }}
+        KIS_APP_KEY_VIRTUAL: ${{ secrets.KIS_APP_KEY_VIRTUAL }}
+        KIS_APP_SECRET_VIRTUAL: ${{ secrets.KIS_APP_SECRET_VIRTUAL }}
+        KIS_CANO_VIRTUAL: ${{ secrets.KIS_CANO_VIRTUAL }}
+        KIS_ACNT_PRDT_CD_VIRTUAL: ${{ secrets.KIS_ACNT_PRDT_CD_VIRTUAL }}
+        KIS_APP_KEY_REAL: ${{ secrets.KIS_APP_KEY_REAL }}
+        KIS_APP_SECRET_REAL: ${{ secrets.KIS_APP_SECRET_REAL }}
+        KIS_CANO_REAL: ${{ secrets.KIS_CANO_REAL }}
+        KIS_ACNT_PRDT_CD_REAL: ${{ secrets.KIS_ACNT_PRDT_CD_REAL }}
+        DISCORD_WEBHOOK_TRADING: ${{ secrets.DISCORD_WEBHOOK_TRADING }}
+      run: python daily_summary.py
       
     - name: Prepare GitHub Pages
       run: |
@@ -85,7 +103,7 @@ jobs:
 
   briefing:
     runs-on: ubuntu-latest
-    if: github.event.schedule == '30 23 * * 1-5' || github.event.schedule == '0 7 * * 1-5' || github.event_name == 'workflow_dispatch'
+    if: github.event.schedule == '50 23 * * 0-4' || github.event_name == 'workflow_dispatch'
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python

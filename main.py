@@ -121,24 +121,13 @@ def generate_report(results):
 
     
     
-    # Send Discord Notification (ALWAYS send, even if no trades)
-    mode_label = "모의투자" if config.KIS_MODE == "VIRTUAL" else "실전투자"
-    current_time = datetime.now().strftime("%H:%M")
-    msg = f"📊 **[{today} {current_time}] 시간별 트레이딩 리포트 ({mode_label})** 📊\n\n"
-    msg += "---\n\n"  # Visual separator
-    
-    # Group results by market or action type for better readability
-    executed_trades = []
-    analyzed_stocks = []
-    
-    for res in results:
-        if "Executed" in res['action']:
-            executed_trades.append(res)
-        else:
-            analyzed_stocks.append(res)
-
-    # Show executed trades
+    # Send Discord Notification
+    # Only send if there are executed trades
     if executed_trades:
+        mode_label = "모의투자" if config.KIS_MODE == "VIRTUAL" else "실전투자"
+        current_time = datetime.now().strftime("%H:%M")
+        msg = f"⚡ **[{today} {current_time}] 매매 체결 알림 ({mode_label})** ⚡\n\n"
+        
         msg += "**✅ 체결 내역**\n"
         for res in executed_trades:
             emoji = "🔴 매수" if "BUY" in res['signal'] else "🔵 매도"
@@ -147,29 +136,17 @@ def generate_report(results):
             if res.get('ai_link'):
                 msg += f" ([뉴스보기]({res['ai_link']}))"
             msg += "\n\n"
-        msg += "---\n\n"  # Visual separator after trades
-    else:
-        # No trades executed
-        msg += "📊 **분석 결과**\n"
-        msg += f"> 분석한 종목 수: {len(results)}개\n"
-        msg += "> 현재 매수/매도 신호가 없어 변동이 없습니다.\n\n"
-        
-        # Show top 3 analyzed stocks for transparency
-        if analyzed_stocks[:3]:
-            msg += "**🔍 분석한 주요 종목** (상위 3개)\n"
-            for res in analyzed_stocks[:3]:
-                msg += f"> {res['name']} ({res['code']}): {res['signal']} - AI 점수 {res.get('ai_score', 0)}\n"
-            msg += "\n"
-        msg += "---\n\n"
             
-    msg += "👉 [상세 리포트 확인하기](https://github.com/MING9UCCI/korea_investment/actions)"
-    discord_notifier.send_message(msg, type="trading")
-    
-    # Send Chart Images for Executed Trades
-    for res in executed_trades:
-        if res.get('chart_path'):
-            caption = f"📉 {res['name']} ({res['code']}) 매매 차트"
-            discord_notifier.send_message(caption, type="trading", file_path=res['chart_path'])
+        msg += "👉 [상세 리포트/자산 그래프](https://ming9ucci.github.io/korea_investment/)\n"
+        discord_notifier.send_message(msg, type="trading")
+        
+        # Send Chart Images for Executed Trades
+        for res in executed_trades:
+            if res.get('chart_path'):
+                caption = f"📉 {res['name']} ({res['code']}) 매매 차트"
+                discord_notifier.send_message(caption, type="trading", file_path=res['chart_path'])
+    else:
+        logging.info("No trades executed. Skipping Discord notification.")
 
 def main():
     logging.info("Starting Trading Bot...")
