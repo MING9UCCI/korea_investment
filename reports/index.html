@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trading Bot - Dashboard</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 2em;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1em;
+            text-align: center;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin-bottom: 30px;
+            background: #fff;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* List Section */
+        h2 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #444;
+            border-left: 4px solid #764ba2;
+            padding-left: 10px;
+        }
+
+        .report-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .report-item {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #eee;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .report-item:hover {
+            transform: translateX(5px);
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .report-item a {
+            text-decoration: none;
+            color: #333;
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .report-date {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .report-arrow {
+            color: #ccc;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        /* Scrollbar */
+        .report-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .report-list::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>AI Trading Dashboard</h1>
+        <p class="subtitle">자산 현황 및 데일리 리포트</p>
+
+        <!-- Chart Area -->
+        <div class="chart-container">
+            <canvas id="assetChart"></canvas>
+        </div>
+
+        <h2>📅 리포트 내역</h2>
+        <ul class="report-list" id="reportList">
+            <li class="loading">데이터 로딩 중...</li>
+        </ul>
+    </div>
+
+    <script>
+        // GitHub API Base URL (GH Pages Root)
+        const REPO_OWNER = 'MING9UCCI';
+        const REPO_NAME = 'korea_investment';
+        const BRANCH = 'gh-pages';
+
+        async function initDashboard() {
+            await loadChart();
+            await loadReports();
+        }
+
+        // 1. Load & Render Asset Chart
+        async function loadChart() {
+            const ctx = document.getElementById('assetChart').getContext('2d');
+
+            try {
+                // Fetch daily_summary.json from root (managed by trade.yml copying logic if needed, 
+                // but actually daily_summary.json is committed to root, so accessible via raw.githubusercontent or relative path if deployed)
+                // Since this runs on GH Pages, relative path './daily_summary.json' should work if deployed.
+                // However, daily_summary.json is in the root of the repo (master branch), 
+                // and trade.yml copies index.html to reports/ for deployment.
+                // We ALSO need to copy daily_summary.json to reports/ in trade.yml for this to work relatively.
+                // Or fetch from raw.githubusercontent.com (might have cache issues)
+                // Let's assume we will update trade.yml to copy daily_summary.json too.
+
+                const response = await fetch('./daily_summary.json');
+                if (!response.ok) throw new Error("No data found");
+
+                const data = await response.json();
+
+                // Parse Data
+                const dates = data.map(d => d.date.slice(5)); // MM-DD
+                const assets = data.map(d => d.net_asset);
+                const colors = data.map((d, i) => {
+                    if (i === 0) return '#667eea';
+                    return d.net_asset >= data[i - 1].net_asset ? '#48bb78' : '#f56565';
+                });
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: '총 자산 (KRW)',
+                            data: assets,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            pointBackgroundColor: colors,
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        return context.raw.toLocaleString() + ' 원';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                grid: { color: '#f0f0f0' }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.log("Chart load failed:", error);
+                // Show placebo chart or empty state if no data yet
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#999';
+                ctx.fillText("아직 자산 데이터가 없습니다.", 100, 150);
+            }
+        }
+
+        // 2. Load Reports from GitHub API
+        async function loadReports() {
+            const reportList = document.getElementById('reportList');
+            const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+            try {
+                // Fetch content from gh-pages root
+                const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/?ref=${BRANCH}`);
+                const data = await response.json();
+
+                if (!Array.isArray(data)) throw new Error("Invalid API response");
+
+                const reportFolders = data
+                    .filter(item => item.type === 'dir' && datePattern.test(item.name))
+                    .map(item => item.name)
+                    .sort()
+                    .reverse();
+
+                if (reportFolders.length === 0) {
+                    reportList.innerHTML = '<li class="loading">생성된 리포트가 없습니다.</li>';
+                } else {
+                    reportList.innerHTML = reportFolders.map(date => `
+                        <li class="report-item">
+                            <a href="${date}/report.html">
+                                <span class="report-date">${date}</span>
+                                <span class="report-arrow">➔</span>
+                            </a>
+                        </li>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Failed to load reports:', error);
+                reportList.innerHTML = '<li class="loading">리포트 목록을 불러오지 못했습니다.</li>';
+            }
+        }
+
+        initDashboard();
+    </script>
+</body>
+
+</html>
