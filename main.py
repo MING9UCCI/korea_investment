@@ -2,6 +2,7 @@ import time
 import logging
 import pandas as pd
 import os
+import json
 from datetime import datetime
 import config
 from kis_api import KisApi
