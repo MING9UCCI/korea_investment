@@ -59,6 +59,11 @@ jobs:
         DISCORD_WEBHOOK_BRIEFING: ${{ secrets.DISCORD_WEBHOOK_BRIEFING }}
       run: python main.py
       
+    - name: Prepare GitHub Pages
+      run: |
+        mkdir -p reports
+        cp index.html reports/index.html
+      
     - name: Commit and Push Report
       run: |
         git config --global user.name 'Trading Bot'
