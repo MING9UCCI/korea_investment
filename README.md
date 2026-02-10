@@ -39,8 +39,13 @@
 - **Seamless Switch**: 코드를 수정할 필요 없이, GitHub Secrets 교체나 `KIS_MODE` 변경만으로 모드가 바뀝니다.
 
 ### 4. 📊 Professional Reporting
-- **Trading Alert**: 매매 체결 시, 디스코드 트레이딩 채널에 실시간으로 알림을 보냅니다. (매수/매도 사유 포함)
-- **Daily Briefing**: 개장 전/장 마감 후, AI가 작성한 고품질의 시황 브리핑을 받아볼 수 있습니다.
+- **Trading Alert**: 매매 체결 시, 디스코드 트레이딩 채널에 실시간으로 알림을 보냅니다. (매수/매도 사유 + **체결 차트 이미지** + **뉴스 원문 링크** 포함)
+- **Daily Briefing**: 매일 아침 08:50(장 시작 전), AI가 작성한 고품질 시황 브리핑을 발송합니다.
+- **Daily Summary**: 매일 오후 15:30(장 마감 후), 내 자산 변동 리포트를 발송합니다.
+
+### 5. 📈 Asset Dashboard
+- **Web Dashboard**: 내 자산이 우상향하고 있는지, 그래프로 한눈에 확인하세요.
+- **URL**: `https://USER_NAME.github.io/korea_investment/` (GitHub Pages 연동 시)
 
 ---
 
