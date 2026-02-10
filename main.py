@@ -21,41 +21,103 @@ logging.basicConfig(
 )
 
 def generate_report(results):
-    """Generate HTML report stored in date-based directory."""
+    """Generate HTML report stored in date-based directory (Cumulative)."""
     today = datetime.now().strftime("%Y-%m-%d")
     report_dir = os.path.join("reports", today)
     os.makedirs(report_dir, exist_ok=True)
     
+    # 1. Load/Update Daily Log (JSON)
+    log_file = os.path.join(report_dir, "trade_log.json")
+    daily_log = []
+    
+    if os.path.exists(log_file):
+        try:
+            with open(log_file, 'r', encoding='utf-8') as f:
+                daily_log = json.load(f)
+        except Exception as e:
+            logging.error(f"Failed to load existing log: {e}")
+            
+    # Append new results with timestamp
+    current_time = datetime.now().strftime("%H:%M:%S")
+    for res in results:
+        res['timestamp'] = current_time
+        daily_log.append(res)
+        
+    # Save updated log
+    with open(log_file, 'w', encoding='utf-8') as f:
+        json.dump(daily_log, f, ensure_ascii=False, indent=2)
+        
+    # 2. Generate Cumulative HTML Report
     html = f"""
     <html>
     <head>
         <title>Trading Report - {today}</title>
         <style>
-            body {{ font-family: Arial, sans-serif; margin: 20px; }}
-            h1 {{ color: #333; }}
-            table {{ border-collapse: collapse; width: 100%; }}
-            th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-            th {{ background-color: #f2f2f2; }}
-            tr:nth-child(even) {{ background-color: #f9f9f9; }}
-            .buy {{ color: red; font-weight: bold; }}
-            .sell {{ color: blue; font-weight: bold; }}
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }}
+            h1 {{ color: #4a4a4a; border-bottom: 2px solid #ddd; padding-bottom: 10px; }}
+            .summary {{ background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }}
+            table {{ border-collapse: collapse; width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }}
+            th, td {{ padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }}
+            th {{ background-color: #667eea; color: white; font-weight: 600; text-transform: uppercase; font-size: 0.9em; }}
+            tr:hover {{ background-color: #f1f1f1; }}
+            .buy {{ color: #e53e3e; font-weight: bold; }}
+            .sell {{ color: #3182ce; font-weight: bold; }}
+            .hold {{ color: #718096; }}
+            .timestamp {{ color: #718096; font-size: 0.9em; }}
+            .no-action {{ color: #a0aec0; font-style: italic; }}
         </style>
     </head>
     <body>
-    <h1>Daily Trading Report ({today})</h1>
-    <a href="/history">View History</a>
-    <table border="1">
-    <tr><th>Market</th><th>Code</th><th>Signal</th><th>Reason</th><th>Action</th></tr>
+    <h1>📅 Daily Trading Report ({today})</h1>
+    
+    <div class="summary">
+        <p><strong>Total Scans:</strong> {len(daily_log)}</p>
+        <p><strong>Last Update:</strong> {current_time}</p>
+        <a href="/history" style="text-decoration: none; color: #667eea; font-weight: bold;">View History &rarr;</a>
+    </div>
+
+    <table>
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>Market</th>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Signal</th>
+            <th>AI Score</th>
+            <th>Reason</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
     """
-    for res in results:
-        signal_class = "buy" if res['signal'] == "BUY" else "sell" if res['signal'] == "SELL" else ""
-        html += f"<tr><td>{res['market']}</td><td>{res['code']}</td><td class='{signal_class}'>{res['signal']}</td><td>{res['reason']}</td><td>{res['action']}</td></tr>"
-    html += "</table></body></html>"
+    
+    # Sort log by time (newest first)
+    for res in reversed(daily_log):
+        signal_class = "buy" if res['signal'] == "BUY" else "sell" if res['signal'] == "SELL" else "hold"
+        ai_score = res.get('ai_score', 'N/A')
+        name = res.get('name', res['code'])
+        
+        html += f"""
+        <tr>
+            <td class="timestamp">{res['timestamp']}</td>
+            <td>{res['market']}</td>
+            <td>{res['code']}</td>
+            <td>{name}</td>
+            <td class="{signal_class}">{res['signal']}</td>
+            <td>{ai_score}</td>
+            <td>{res['reason']}</td>
+            <td>{res['action']}</td>
+        </tr>
+        """
+        
+    html += "</tbody></table></body></html>"
     
     file_path = os.path.join(report_dir, "report.html")
     with open(file_path, "w", encoding='utf-8') as f:
         f.write(html)
-    logging.info(f"Report generated: {file_path}")
+    logging.info(f"Cumulative Report generated: {file_path}")
+
     
     
     # Send Discord Notification (ALWAYS send, even if no trades)
