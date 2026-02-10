@@ -51,15 +51,24 @@ USE_MARKET_SCAN = True
 SCAN_LIMIT = 50 
 
 # If USE_MARKET_SCAN is False (or for US stocks), these codes are used:
-TARGET_CODES = ["005930", "000660"] # Domestic: Samsung Elec, SK Hynix
+TARGET_CODES = [
+    "005930",  # 삼성전자
+    "000660",  # SK하이닉스
+    "035420",  # NAVER
+    "005380",  # 현대차
+    "051910",  # LG화학
+    "006400",  # 삼성SDI
+    "035720",  # 카카오
+] # Domestic: Samsung Elec, SK Hynix
 # NOTE: Major US Tech stocks (TSLA, AAPL) cost > $200 (approx 300,000 KRW). 
 # With 10,000 KRW seed, you cannot buy 1 share in REAL mode. Use VIRTUAL mode to test.
-US_TARGET_CODES = ["TSLA", "AAPL", "NVDA", "MSFT"] # US: Tesla, Apple, Nvidia, Microsoft
+# Virtual trading does NOT support US stock orders!
+US_TARGET_CODES = []  # Disabled for virtual trading # US: Tesla, Apple, Nvidia, Microsoft
 
 # [Strategy Parameters]
 RSI_PERIOD = 14
-RSI_LOWER = 30
-RSI_UPPER = 70
+RSI_LOWER = 35  # More lenient (was 30)
+RSI_UPPER = 65  # More lenient (was 70)
 BB_PERIOD = 20
 BB_STD = 2
 

@@ -140,9 +140,10 @@ def main():
                     reason += f" | AI: {ai_reason}"
                     
                     # Hybrid Logic: Overrule if AI is strongly opposing
-                    if signal == "BUY" and ai_score < -20:
+                    if signal == "BUY" and ai_score < -50:  # More lenient (was -20)
+                        logging.warning(f"[{code}] AI VETO: BUY blocked (AI score: {ai_score})")
                         signal = "HOLD"
-                        reason += " (AI Veto: Negative News)"
+                        reason += " (AI Veto: Very Negative News)"
                     elif signal == "SELL" and ai_score > 20:
                         pass # Let technical sell proceed even with generic positive news
                 
