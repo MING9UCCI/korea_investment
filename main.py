@@ -59,9 +59,9 @@ def generate_report(results):
     
     
     # Send Discord Notification
-    # Send Discord Notification
     mode_label = "모의투자" if config.KIS_MODE == "VIRTUAL" else "실전투자"
     msg = f"📊 **[{today}] 데일리 트레이딩 리포트 ({mode_label})** 📊\n\n"
+    msg += "---\n\n"  # Visual separator
     has_action = False
     
     # Group results by market or action type for better readability
@@ -81,13 +81,14 @@ def generate_report(results):
             emoji = "🔴 매수" if "BUY" in res['signal'] else "🔵 매도"
             msg += f"> {emoji} **{res['name']}**\n"
             msg += f"> `사유` {res['reason']}\n\n"
+        msg += "---\n\n"  # Visual separator after trades
             
     if failed_trades:
         # Only report failures if needed, or keep it silent to reduce noise
         pass 
             
     if has_action:
-        msg += f"\n👉 [상세 리포트 확인하기](https://github.com/Minwoo/korea_investment/actions)"
+        msg += "👉 [상세 리포트 확인하기](https://github.com/Minwoo/korea_investment/actions)"
         discord_notifier.send_message(msg, type="trading")
 
 def main():

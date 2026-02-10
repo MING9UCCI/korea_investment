@@ -48,7 +48,7 @@ MARKET_TYPE = "BOTH"
 # If USE_MARKET_SCAN is True, the bot ignores TARGET_CODES and picks Top 100 by Volume.
 # (Note: Market Scan currently only supports Domestic. US will use fixed list below for now)
 USE_MARKET_SCAN = True 
-SCAN_LIMIT = 50 
+SCAN_LIMIT = 100  # Scan top 100 stocks by volume (was 50) 
 
 # If USE_MARKET_SCAN is False (or for US stocks), these codes are used:
 TARGET_CODES = [
