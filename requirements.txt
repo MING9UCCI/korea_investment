@@ -1,6 +1,6 @@
 requests
 pandas
-requests
+python-dotenv
 pyyaml
 gnews
 google-generativeai
