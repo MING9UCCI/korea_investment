@@ -14,8 +14,8 @@ else:
     model = None
     logging.warning("GEMINI_API_KEY not found. AI analysis will be disabled.")
 
-def get_news(keyword, max_results=3):
-    """Fetch news from Google News RSS."""
+def _fetch_news_data(keyword, max_results=3):
+    """Fetch raw news data from Google News RSS."""
     google_news = GNews(language='en', country='US', period='1d', max_results=max_results)
     # Check if keyword is Korean
     if any("\u3130" <= char <= "\u318f" or "\uac00" <= char <= "\ud7a3" for char in keyword):
@@ -24,16 +24,21 @@ def get_news(keyword, max_results=3):
         
     try:
         news_list = google_news.get_news(keyword)
-        simplified_news = []
-        for news in news_list:
-            pub_date = news.get('published date', '')
-            title = news.get('title', '')
-            link = news.get('url', '')
-            simplified_news.append(f"- [{pub_date}] {title} ({link})")
-        return "\n".join(simplified_news)
+        return news_list
     except Exception as e:
         logging.error(f"Failed to fetch news for {keyword}: {e}")
-        return ""
+        return []
+
+def get_news(keyword, max_results=3):
+    """Fetch formatted news string for AI prompt."""
+    news_list = _fetch_news_data(keyword, max_results)
+    simplified_news = []
+    for news in news_list:
+        pub_date = news.get('published date', '')
+        title = news.get('title', '')
+        link = news.get('url', '')
+        simplified_news.append(f"- [{pub_date}] {title} ({link})")
+    return "\n".join(simplified_news)
 
 def generate_briefing(market_type, portfolio_summary):
     """Generate Morning/Closing Briefing."""
@@ -79,23 +84,35 @@ def analyze_sentiment(stock_name):
         stock_name (str): Stock name or ticker symbol
         
     Returns:
-        tuple: (score, reason) where score is -100 to +100, reason is explanation
+        tuple: (score, reason, news_link) 
     """
     if not model:
-        return 0, "AI Not Configured"
+        return 0, "AI Not Configured", ""
     
     # Fetch recent news
-    news = get_news(stock_name, max_results=3)
+    news_list = _fetch_news_data(stock_name, max_results=3)
     
-    if not news:
-        return 0, "No recent news found"
+    if not news_list:
+        return 0, "No recent news found", ""
+    
+    # Format for prompt
+    formatted_news = []
+    first_link = ""
+    for i, news in enumerate(news_list):
+        pub_date = news.get('published date', '')
+        title = news.get('title', '')
+        link = news.get('url', '')
+        formatted_news.append(f"- [{pub_date}] {title} ({link})")
+        if i == 0: first_link = link
+            
+    news_text = "\n".join(formatted_news)
     
     prompt = f"""
     당신은 주식 시장 뉴스 분석 전문가입니다.
     다음 뉴스를 분석하여 '{stock_name}' 종목에 대한 감성 점수를 매겨주세요.
     
     [최근 뉴스]
-    {news}
+    {news_text}
     
     점수 기준:
     - +100: 매우 긍정적 (강력한 매수 신호)
@@ -112,10 +129,10 @@ def analyze_sentiment(stock_name):
         response = model.generate_content(prompt)
         text = response.text.replace("```json", "").replace("```", "").strip()
         result = json.loads(text)
-        return result.get("score", 0), result.get("reason", "분석 완료")
+        return result.get("score", 0), result.get("reason", "분석 완료"), first_link
     except Exception as e:
         logging.error(f"Sentiment analysis failed for {stock_name}: {e}")
-        return 0, f"분석 실패: {str(e)}"
+        return 0, f"분석 실패: {str(e)}", ""
 
 
 def analyze_portfolio(holdings, candidates, balance):

@@ -63,6 +63,7 @@ jobs:
       run: |
         mkdir -p reports
         cp index.html reports/index.html
+        cp daily_summary.json reports/daily_summary.json || echo "No daily_summary.json found yet"
       
     - name: Commit and Push Report
       run: |

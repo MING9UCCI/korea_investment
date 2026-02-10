@@ -1,11 +1,13 @@
 import requests
 import config
 import logging
+import os
 
-def send_message(message, type="trading"):
+def send_message(message, type="trading", file_path=None):
     """
     Send a message to the configured Discord Webhook.
     type: "trading" or "briefing"
+    file_path: Optional path to an image file to attach
     """
     if type == "briefing":
         url = config.DISCORD_WEBHOOK_BRIEFING
@@ -26,7 +28,15 @@ def send_message(message, type="trading"):
     }
     
     try:
-        response = requests.post(url, json=payload, timeout=5)
+        if file_path and os.path.exists(file_path):
+            with open(file_path, 'rb') as f:
+                files = {
+                    'file': (os.path.basename(file_path), f, 'image/png')
+                }
+                response = requests.post(url, data=payload, files=files, timeout=10)
+        else:
+            response = requests.post(url, json=payload, timeout=5)
+            
         response.raise_for_status()
         return True
     except Exception as e:

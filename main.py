@@ -9,6 +9,7 @@ import strategy
 import market_schedule
 import ai_analyst
 import discord_notifier
+import chart_generator
 
 # Setup Logging
 logging.basicConfig(
@@ -142,7 +143,10 @@ def generate_report(results):
         for res in executed_trades:
             emoji = "🔴 매수" if "BUY" in res['signal'] else "🔵 매도"
             msg += f"> {emoji} **{res['name']}** ({res['code']})\n"
-            msg += f"> `사유` {res['reason']}\n\n"
+            msg += f"> `사유` {res['reason']}"
+            if res.get('ai_link'):
+                msg += f" ([뉴스보기]({res['ai_link']}))"
+            msg += "\n\n"
         msg += "---\n\n"  # Visual separator after trades
     else:
         # No trades executed
@@ -160,6 +164,12 @@ def generate_report(results):
             
     msg += "👉 [상세 리포트 확인하기](https://github.com/MING9UCCI/korea_investment/actions)"
     discord_notifier.send_message(msg, type="trading")
+    
+    # Send Chart Images for Executed Trades
+    for res in executed_trades:
+        if res.get('chart_path'):
+            caption = f"📉 {res['name']} ({res['code']}) 매매 차트"
+            discord_notifier.send_message(caption, type="trading", file_path=res['chart_path'])
 
 def main():
     logging.info("Starting Trading Bot...")
@@ -207,7 +217,7 @@ def main():
                 ai_reason = "Skipped"
                 if signal in ["BUY", "SELL"]:
                     logging.info(f"Technical signal found for {name}. Asking AI...")
-                    ai_score, ai_reason = ai_analyst.analyze_sentiment(name)
+                    ai_score, ai_reason, ai_link = ai_analyst.analyze_sentiment(name)
                     reason += f" | AI: {ai_reason}"
                     
                     # Hybrid Logic: Overrule if AI is strongly opposing
@@ -223,19 +233,22 @@ def main():
                 action = "None"
                 
                 # 4. Execute
+                chart_path = None
                 if signal == "BUY":
                     if kis.buy_order(code, 1):
                         action = "Executed BUY"
+                        chart_path = chart_generator.generate_chart(df, code, name, "BUY")
                     else:
                         action = "Failed BUY"
                 elif signal == "SELL":
                     if kis.sell_order(code, 1):
                          action = "Executed SELL"
+                         chart_path = chart_generator.generate_chart(df, code, name, "SELL")
                     else:
                         action = "Failed SELL"
                 
                 results.append({
-                    "market": "KR", "code": code, "name": name, "signal": signal, "ai_score": ai_score, "reason": reason, "action": action
+                    "market": "KR", "code": code, "name": name, "signal": signal, "ai_score": ai_score, "reason": reason, "ai_link": ai_link if 'ai_link' in locals() else "", "action": action, "chart_path": chart_path
                 })
                 time.sleep(0.5)
         else:
@@ -271,7 +284,7 @@ def main():
                 ai_reason = "Skipped"
                 if signal in ["BUY", "SELL"]:
                     logging.info(f"Technical signal found for {code}. Asking AI...")
-                    ai_score, ai_reason = ai_analyst.analyze_sentiment(code)
+                    ai_score, ai_reason, ai_link = ai_analyst.analyze_sentiment(code)
                     reason += f" | AI: {ai_reason}"
                     
                     if signal == "BUY" and ai_score < -50:  # Less restrictive (was -20)
@@ -283,19 +296,22 @@ def main():
                 action = "None"
                 
                 # 4. Execute
+                chart_path = None
                 if signal == "BUY":
                     if kis.buy_overseas_order(code, 1, excd):
                         action = "Executed US BUY"
+                        chart_path = chart_generator.generate_chart(df, code, name, "BUY")
                     else:
                         action = "Failed US BUY"
                 elif signal == "SELL":
                     if kis.sell_overseas_order(code, 1, excd):
                         action = "Executed US SELL"
+                        chart_path = chart_generator.generate_chart(df, code, name, "SELL")
                     else:
                         action = "Failed US SELL"
                 
                 results.append({
-                    "market": "US", "code": code, "name": name, "signal": signal, "ai_score": ai_score, "reason": reason, "action": action
+                    "market": "US", "code": code, "name": name, "signal": signal, "ai_score": ai_score, "reason": reason, "ai_link": ai_link if 'ai_link' in locals() else "", "action": action, "chart_path": chart_path
                 })
                 time.sleep(0.5)
         else:
