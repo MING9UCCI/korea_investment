@@ -111,7 +111,8 @@
 
             try {
                 // GitHub API로 reports 폴더의 내용 가져오기
-                const response = await fetch('https://api.github.com/repos/MING9UCCI/korea_investment/contents/reports?ref=gh-pages');
+                // gh-pages 브랜치의 루트에 리포트 폴더들이 위치하므로 contents/reports가 아닌 contents/를 호출해야 함
+                const response = await fetch('https://api.github.com/repos/MING9UCCI/korea_investment/contents/?ref=gh-pages');
                 const data = await response.json();
 
                 // API 에러 체크 (배열이 아닌 경우)

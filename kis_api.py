@@ -92,6 +92,12 @@ class KisApi:
             else:
                 print(f"Error getting price for {code}: {data['msg1']}")
                 return None
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTP Error in get_current_price for {code}: {e}")
+            print(f"Response status: {e.response.status_code}")
+            if e.response.status_code == 500:
+                print("⚠️  KIS API Server Error (500) - This is a server-side issue, not a code problem")
+            return None
         except Exception as e:
             print(f"Exception in get_current_price: {e}")
             return None
@@ -226,7 +232,7 @@ class KisApi:
         path = "uapi/domestic-stock/v1/trading/order-cash"
         url = f"{self.url_base}/{path}"
         # TTTC0801U: Sell (Real), VTTC0801U: Sell (Virtual)
-        tr_id = "TTTC0801U" if config.MODE == "REAL" else "VTTC0801U"
+        tr_id = "TTTC0801U" if config.KIS_MODE == "REAL" else "VTTC0801U"
         
         headers = self._get_headers(tr_id)
         body = {
@@ -251,6 +257,50 @@ class KisApi:
         except Exception as e:
             print(f"Exception in sell_order: {e}")
             return False
+
+    def get_overseas_holdings(self):
+        """Fetch overseas stock holdings."""
+        # Note: Virtual trading for overseas stocks might be limited or use different TR IDs.
+        # This implementation assumes standard KIS API structure for overseas balance.
+        path = "uapi/overseas-stock/v1/trading/inquire-balance"
+        url = f"{self.url_base}/{path}"
+        
+        # TR ID for Overseas Balance: VTTS3012R (Virtual), TTTS3012R (Real)
+        # Verify this TR ID from documentation if possible. 
+        tr_id = "TTTS3012R" if config.KIS_MODE == "REAL" else "VTTS3012R"
+        
+        headers = self._get_headers(tr_id)
+        
+        # Overseas params are slightly different
+        params = {
+            "CANO": config.CANO,
+            "ACNT_PRDT_CD": config.ACNT_PRDT_CD,
+            "OVRS_EXCG_CD": "NASD", # NASD (Nasdaq), NYSE (New York), AMS (Amex), etc. or try to get all?
+            # KIS API often requires specific exchange code. 
+            # Let's try "NASD" as default for US stocks.
+            "TR_CRCY_CD": "USD",
+            "CTX_AREA_FK": "",
+            "CTX_AREA_NK": ""
+        }
+        
+        try:
+            res = requests.get(url, headers=headers, params=params)
+             # Don't raise for status immediately, check rt_cd first if possible, 
+             # but standard is raise then check json.
+            if res.status_code != 200:
+                 # If 500 or 404, just return empty list and log warning
+                print(f"Warning: Overseas holdings check failed with status {res.status_code}")
+                return []
+                
+            data = res.json()
+            if data['rt_cd'] == '0':
+                return data['output1'] # output1 usually contains holdings list
+            else:
+                print(f"Overseas Balance Check Failed: {data['msg1']} (Code: {data['msg_cd']})")
+                return []
+        except Exception as e:
+            print(f"Exception in get_overseas_holdings: {e}")
+            return []
 
     def check_balance(self):
         """Check account balance."""
