@@ -202,9 +202,9 @@ def main():
                     ai_score, ai_reason = ai_analyst.analyze_sentiment(code)
                     reason += f" | AI: {ai_reason}"
                     
-                    if signal == "BUY" and ai_score < -20:
+                    if signal == "BUY" and ai_score < -50:  # Less restrictive (was -20)
                         signal = "HOLD"
-                        reason += " (AI Veto: Negative News)"
+                        reason += " (AI Veto: Very Negative News)"
                 
                 logging.info(f"[{code}] US Signal: {signal} | AI Score: {ai_score}")
                 
