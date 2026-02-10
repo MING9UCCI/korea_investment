@@ -123,6 +123,12 @@ def generate_report(results):
     
     
     # Send Discord Notification
+    # Group results by market or action type for better readability
+    executed_trades = []
+    for res in results:
+        if "Executed" in res['action']:
+            executed_trades.append(res)
+
     # Only send if there are executed trades
     if executed_trades:
         mode_label = "모의투자" if config.KIS_MODE == "VIRTUAL" else "실전투자"
