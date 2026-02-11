@@ -314,7 +314,7 @@ class KisApi:
             "ACNT_PRDT_CD": config.ACNT_PRDT_CD,
             "AFHR_FLPR_YN": "N",
             "OFL_YN": "N",
-            "INQR_DVSN": "02",
+            "INQR_DVSN": "01", # Changed from 02 to 01 as per API Notice (2024-02-11)
             "UNPR_DVSN": "01",
             "FUND_STTL_ICLD_YN": "N",
             "FNCG_AMT_AUTO_RDPT_YN": "N",
