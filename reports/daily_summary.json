@@ -4,5 +4,11 @@
     "net_asset": 0,
     "profit_loss": 0,
     "timestamp": "21:34:41"
+  },
+  {
+    "date": "2026-02-11",
+    "net_asset": 9989630,
+    "profit_loss": -10000,
+    "timestamp": "07:36:36"
   }
 ]
