@@ -51,69 +51,217 @@ def generate_report(results, holdings, balance_summary):
         
     # 2. Generate Cumulative HTML Report
     html = f"""
-    <html>
+    <!DOCTYPE html>
+    <html lang="ko">
     <head>
-        <title>Trading Report - {today}</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Daily Trading Report - {today}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
         <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }}
-            h1 {{ color: #4a4a4a; border-bottom: 2px solid #ddd; padding-bottom: 10px; }}
-            .summary {{ background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }}
-            table {{ border-collapse: collapse; width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }}
-            th, td {{ padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }}
-            th {{ background-color: #667eea; color: white; font-weight: 600; text-transform: uppercase; font-size: 0.9em; }}
-            tr:hover {{ background-color: #f1f1f1; }}
-            .buy {{ color: #e53e3e; font-weight: bold; }}
-            .sell {{ color: #3182ce; font-weight: bold; }}
-            .hold {{ color: #718096; }}
-            .timestamp {{ color: #718096; font-size: 0.9em; }}
-            .no-action {{ color: #a0aec0; font-style: italic; }}
+            :root {{
+                --bg-color: #0f172a;
+                --card-bg: rgba(30, 41, 59, 0.7);
+                --accent-color: #3b82f6;
+                --text-primary: #f8fafc;
+                --text-secondary: #94a3b8;
+                --buy-color: #f87171;
+                --sell-color: #60a5fa;
+                --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+            }}
+
+            body {{
+                font-family: 'Outfit', sans-serif;
+                background-color: var(--bg-color);
+                background-image: 
+                    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                    radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
+                color: var(--text-primary);
+                min-height: 100vh;
+                padding: 40px 20px;
+                margin: 0;
+            }}
+
+            .container {{
+                max-width: 1000px;
+                margin: 0 auto;
+            }}
+
+            header {{
+                text-align: center;
+                margin-bottom: 40px;
+            }}
+
+            h1 {{
+                font-size: 2.5rem;
+                font-weight: 700;
+                background: linear-gradient(to right, #60a5fa, #c084fc);
+                -webkit-background-clip: text;
+                background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin-bottom: 10px;
+            }}
+            
+            .back-link {{
+                display: inline-block;
+                margin-top: 10px;
+                color: var(--text-secondary);
+                text-decoration: none;
+                font-size: 0.9rem;
+                transition: color 0.2s;
+            }}
+            
+            .back-link:hover {{
+                color: var(--accent-color);
+            }}
+
+            .summary-card {{
+                background: var(--card-bg);
+                backdrop-filter: blur(12px);
+                border: var(--glass-border);
+                border-radius: 16px;
+                padding: 25px;
+                margin-bottom: 30px;
+                display: flex;
+                justify-content: space-around;
+                text-align: center;
+            }}
+            
+            .card-item h3 {{
+                color: var(--text-secondary);
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                margin-bottom: 5px;
+            }}
+            
+            .card-item p {{
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--text-primary);
+            }}
+
+            table {{
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0;
+                background: var(--card-bg);
+                backdrop-filter: blur(12px);
+                border-radius: 16px;
+                border: var(--glass-border);
+                overflow: hidden;
+            }}
+
+            th, td {{
+                padding: 15px 20px;
+                text-align: left;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }}
+
+            th {{
+                background: rgba(255, 255, 255, 0.05);
+                color: var(--text-secondary);
+                font-weight: 600;
+                font-size: 0.85rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }}
+
+            tr:last-child td {{
+                border-bottom: none;
+            }}
+
+            tr:hover td {{
+                background: rgba(255, 255, 255, 0.03);
+            }}
+
+            .buy {{ color: var(--buy-color); font-weight: 600; }}
+            .sell {{ color: var(--sell-color); font-weight: 600; }}
+            .hold {{ color: var(--text-secondary); }}
+            
+            .tag {{
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 0.8rem;
+                font-weight: 600;
+            }}
+            
+            .tag.buy {{ background: rgba(248, 113, 113, 0.15); }}
+            .tag.sell {{ background: rgba(96, 165, 250, 0.15); }}
+            .tag.hold {{ background: rgba(148, 163, 184, 0.15); }}
+
+            .ai-score {{
+                font-weight: bold;
+            }}
+            .positive {{ color: #4ade80; }}
+            .negative {{ color: #f87171; }}
         </style>
     </head>
     <body>
-    <h1>📅 Daily Trading Report ({today})</h1>
-    
-    <div class="summary">
-        <p><strong>Total Scans:</strong> {len(daily_log)}</p>
-        <p><strong>Last Update:</strong> {current_time}</p>
-        <a href="/history" style="text-decoration: none; color: #667eea; font-weight: bold;">View History &rarr;</a>
-    </div>
+        <div class="container">
+            <header>
+                <h1>Daily Trading Report</h1>
+                <p style="color: var(--text-secondary);">{today}</p>
+                <a href="../index.html" class="back-link">&larr; Back to Dashboard</a>
+            </header>
 
-    <table>
-    <thead>
-        <tr>
-            <th>Time</th>
-            <th>Market</th>
-            <th>Code</th>
-            <th>Name</th>
-            <th>Signal</th>
-            <th>AI Score</th>
-            <th>Reason</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
+            <div class="summary-card">
+                <div class="card-item">
+                    <h3>Total Scans</h3>
+                    <p>{len(daily_log)}</p>
+                </div>
+                <div class="card-item">
+                    <h3>Last Update</h3>
+                    <p>{current_time}</p>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Market</th>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Signal</th>
+                        <th>AI Score</th>
+                        <th>Reason</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
     """
     
     # Sort log by time (newest first)
     for res in reversed(daily_log):
-        signal_class = "buy" if res['signal'] == "BUY" else "sell" if res['signal'] == "SELL" else "hold"
-        ai_score = res.get('ai_score', 'N/A')
+        signal = res['signal']
+        signal_class = "buy" if signal == "BUY" else "sell" if signal == "SELL" else "hold"
+        
+        ai_score = res.get('ai_score', 0)
+        ai_class = "positive" if isinstance(ai_score, int) and ai_score > 0 else "negative" if isinstance(ai_score, int) and ai_score < 0 else ""
+        ai_display = ai_score if ai_score != 'N/A' else '-'
+        
         name = res.get('name', res['code'])
         
         html += f"""
         <tr>
-            <td class="timestamp">{res['timestamp']}</td>
-            <td>{res['market']}</td>
+            <td style="color: var(--text-secondary); font-size: 0.9em;">{res['timestamp']}</td>
+            <td><span style="font-size: 0.8em; opacity: 0.8;">{res['market']}</span></td>
             <td>{res['code']}</td>
-            <td>{name}</td>
-            <td class="{signal_class}">{res['signal']}</td>
-            <td>{ai_score}</td>
-            <td>{res['reason']}</td>
+            <td style="font-weight: 500;">{name}</td>
+            <td><span class="tag {signal_class}">{signal}</span></td>
+            <td class="ai-score {ai_class}">{ai_display}</td>
+            <td style="font-size: 0.9em; max-width: 300px;">{res['reason']}</td>
             <td>{res['action']}</td>
         </tr>
         """
         
-    html += "</tbody></table></body></html>"
+    html += """
+                </tbody>
+            </table>
+        </div>
+    </body>
+    </html>
+    """
     
     file_path = os.path.join(report_dir, "report.html")
     with open(file_path, "w", encoding='utf-8') as f:
