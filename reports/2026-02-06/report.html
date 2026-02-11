@@ -1,21 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Trading Report - 2026-02-06</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent-color: #3b82f6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --buy-color: #f87171;
+            --sell-color: #60a5fa;
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-    <html>
-    <head>
-        <title>Trading Report - 2026-02-06</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { color: #333; }
-            table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-            .buy { color: red; font-weight: bold; }
-            .sell { color: blue; font-weight: bold; }
-        </style>
-    </head>
-    <body>
-    <h1>Daily Trading Report (2026-02-06)</h1>
-    <a href="/history">View History</a>
-    <table border="1">
-    <tr><th>Market</th><th>Code</th><th>Signal</th><th>Reason</th><th>Action</th></tr>
-    <tr><td>US</td><td>TSLA</td><td class=''>HOLD</td><td>RSI: 40.93, Price: 411.3999, BB_Low: 400.38, BB_High: 460.46</td><td>None</td></tr><tr><td>US</td><td>AAPL</td><td class='sell'>SELL</td><td>Overbought (RSI 73.64) & Near BB Upper | AI: AI 매도세 및 지정학적 역풍 속에서도 견고한 안전자산으로 부상하며 강세 심리가 강화되고 있습니다.</td><td>Failed US SELL</td></tr><tr><td>US</td><td>NVDA</td><td class=''>HOLD</td><td>RSI: 49.10, Price: 185.1723, BB_Low: 174.12, BB_High: 195.20</td><td>None</td></tr><tr><td>US</td><td>MSFT</td><td class=''>HOLD</td><td>RSI: 31.53, Price: 402.29, BB_Low: 392.86, BB_High: 503.12</td><td>None</td></tr></table></body></html>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 40px 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        
+        .back-link:hover {
+            color: var(--accent-color);
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: var(--glass-border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+        
+        .card-item h3 {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .card-item p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            border: var(--glass-border);
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .buy { color: var(--buy-color); font-weight: 600; }
+        .sell { color: var(--sell-color); font-weight: 600; }
+        .hold { color: var(--text-secondary); }
+        
+        .tag {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .tag.buy { background: rgba(248, 113, 113, 0.15); }
+        .tag.sell { background: rgba(96, 165, 250, 0.15); }
+        .tag.hold { background: rgba(148, 163, 184, 0.15); }
+
+        .ai-score {
+            font-weight: bold;
+        }
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Daily Trading Report</h1>
+            <p style="color: var(--text-secondary);">2026-02-06</p>
+            <a href="../index.html" class="back-link">&larr; Back to Dashboard</a>
+        </header>
+
+        <div class="summary-card">
+            <div class="card-item">
+                <h3>Total Scans</h3>
+                <p>4</p>
+            </div>
+            <div class="card-item">
+                <h3>Last Update</h3>
+                <p>00:00:00</p>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Market</th>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Signal</th>
+                    <th>AI Score</th>
+                    <th>Reason</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+
+        <tr>
+            <td style="color: var(--text-secondary); font-size: 0.9em;">00:00:00</td>
+            <td><span style="font-size: 0.8em; opacity: 0.8;">US</span></td>
+            <td>TSLA</td>
+            <td style="font-weight: 500;">TSLA</td>
+            <td><span class="tag hold">HOLD</span></td>
+            <td class="ai-score ">-</td>
+            <td style="font-size: 0.9em; max-width: 300px;">RSI: 40.93, Price: 411.3999, BB_Low: 400.38, BB_High: 460.46</td>
+            <td>None</td>
+        </tr>
+    
+        <tr>
+            <td style="color: var(--text-secondary); font-size: 0.9em;">00:00:00</td>
+            <td><span style="font-size: 0.8em; opacity: 0.8;">US</span></td>
+            <td>AAPL</td>
+            <td style="font-weight: 500;">AAPL</td>
+            <td><span class="tag sell">SELL</span></td>
+            <td class="ai-score ">-</td>
+            <td style="font-size: 0.9em; max-width: 300px;">Overbought (RSI 73.64) & Near BB Upper | AI: AI 매도세 및 지정학적 역풍 속에서도 견고한 안전자산으로 부상하며 강세 심리가 강화되고 있습니다.</td>
+            <td>Failed US SELL</td>
+        </tr>
+    
+        <tr>
+            <td style="color: var(--text-secondary); font-size: 0.9em;">00:00:00</td>
+            <td><span style="font-size: 0.8em; opacity: 0.8;">US</span></td>
+            <td>NVDA</td>
+            <td style="font-weight: 500;">NVDA</td>
+            <td><span class="tag hold">HOLD</span></td>
+            <td class="ai-score ">-</td>
+            <td style="font-size: 0.9em; max-width: 300px;">RSI: 49.10, Price: 185.1723, BB_Low: 174.12, BB_High: 195.20</td>
+            <td>None</td>
+        </tr>
+    
+        <tr>
+            <td style="color: var(--text-secondary); font-size: 0.9em;">00:00:00</td>
+            <td><span style="font-size: 0.8em; opacity: 0.8;">US</span></td>
+            <td>MSFT</td>
+            <td style="font-weight: 500;">MSFT</td>
+            <td><span class="tag hold">HOLD</span></td>
+            <td class="ai-score ">-</td>
+            <td style="font-size: 0.9em; max-width: 300px;">RSI: 31.53, Price: 402.29, BB_Low: 392.86, BB_High: 503.12</td>
+            <td>None</td>
+        </tr>
+    
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
