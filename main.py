@@ -145,7 +145,18 @@ def generate_report(results, holdings, balance_summary):
     # 2. Portfolio Status Section (Always Included)
     msg += "**💰 현재 자산 현황**\n"
     total_asset = int(balance_summary.get('tot_evlu_amt', 0))
+    # NEW: Total Profit/Loss
+    # 'evlu_pfls_smtl_amt' = Evaluation Profit/Loss Total (KRW)
+    total_profit_loss = int(balance_summary.get('evlu_pfls_smtl_amt', 0))
+    
+    # Calculate Profit Rate manually for total if not provided: (Profit / (Asset - Profit)) * 100 roughly, 
+    # or just show Amount. 'asst_icdc_erng_rt' might be available?
+    # Let's rely on Amount + Emoji.
+    
+    emoji_pl = "🔺" if total_profit_loss > 0 else "🔹" if total_profit_loss < 0 else "➖"
+    
     msg += f"> 총 평가액: **{total_asset:,} KRW**\n"
+    msg += f"> 평가 손익: {emoji_pl} **{total_profit_loss:,} KRW**\n"
     
     if holdings:
         msg += "> 보유 종목:\n"
