@@ -4,10 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Trading Bot - Dashboard</title>
-    <!-- Chart.js CDN -->
+    <title>AI Auto-Trading | Dashboard</title>
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent-color: #3b82f6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --up-color: #f87171;
+            /* Red for UP (Korea) */
+            --down-color: #60a5fa;
+            /* Blue for DOWN (Korea) */
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -15,260 +31,352 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image:
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
+            color: var(--text-primary);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 800px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-top: 20px;
         }
 
         h1 {
-            color: #333;
-            margin-bottom: 5px;
-            font-size: 2em;
-            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
         }
 
         .subtitle {
-            color: #666;
-            margin-bottom: 20px;
-            font-size: 1em;
-            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1rem;
         }
 
-        /* Chart Container */
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
             margin-bottom: 30px;
-            background: #fff;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
 
-        /* List Section */
-        h2 {
-            font-size: 1.2em;
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: var(--glass-border);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card-title {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             margin-bottom: 15px;
-            color: #444;
-            border-left: 4px solid #764ba2;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .card-sub {
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .up {
+            color: var(--up-color);
+        }
+
+        .down {
+            color: var(--down-color);
+        }
+
+        /* Chart Section */
+        .chart-wrapper {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: var(--glass-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+            height: 400px;
+            position: relative;
+        }
+
+        /* Reports List */
+        .reports-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
             padding-left: 10px;
+            border-left: 4px solid var(--accent-color);
         }
 
-        .report-list {
-            list-style: none;
-            max-height: 300px;
-            overflow-y: auto;
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
         }
 
-        .report-item {
-            background: white;
-            margin: 10px 0;
+        .report-link {
+            display: block;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #eee;
-            transition: all 0.2s ease;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .report-item:hover {
-            transform: translateX(5px);
-            border-color: #667eea;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .report-item a {
+            border-radius: 12px;
+            text-align: center;
             text-decoration: none;
-            color: #333;
-            display: flex;
-            width: 100%;
-            justify-content: space-between;
-            align-items: center;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+
+        .report-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            color: var(--accent-color);
         }
 
         .report-date {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-
-        .report-arrow {
-            color: #ccc;
+            font-weight: 600;
+            font-size: 1.1rem;
         }
 
         .loading {
+            grid-column: 1 / -1;
             text-align: center;
-            color: #666;
-            padding: 20px;
+            padding: 40px;
+            color: var(--text-secondary);
         }
 
-        /* Scrollbar */
-        .report-list::-webkit-scrollbar {
-            width: 6px;
-        }
+        /* Responsive */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
 
-        .report-list::-webkit-scrollbar-thumb {
-            background-color: #ccc;
-            border-radius: 3px;
+            .card-value {
+                font-size: 1.5rem;
+            }
+
+            .chart-wrapper {
+                height: 300px;
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>AI Trading Dashboard</h1>
-        <p class="subtitle">자산 현황 및 데일리 리포트</p>
+        <header>
+            <h1>STOCK AI DASHBOARD</h1>
+            <p class="subtitle">Autonomous Trading & Asset Management</p>
+        </header>
 
-        <!-- Chart Area -->
-        <div class="chart-container">
-            <canvas id="assetChart"></canvas>
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="card">
+                <div class="card-title">Total Net Worth</div>
+                <div class="card-value" id="totalAsset">Loading...</div>
+                <div class="card-sub" id="assetChange">-</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Total Profit / Loss</div>
+                <div class="card-value" id="totalProfit">Loading...</div>
+                <div class="card-sub" id="profitRate">-</div>
+            </div>
         </div>
 
-        <h2>📅 리포트 내역</h2>
-        <ul class="report-list" id="reportList">
-            <li class="loading">데이터 로딩 중...</li>
-        </ul>
+        <!-- Main Chart -->
+        <div class="chart-wrapper">
+            <canvas id="mainChart"></canvas>
+        </div>
+
+        <!-- Reports -->
+        <div class="reports-section">
+            <h2>Daily Reports</h2>
+            <div class="reports-grid" id="reportList">
+                <div class="loading">Fetching Data...</div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // GitHub API Base URL (GH Pages Root)
         const REPO_OWNER = 'MING9UCCI';
         const REPO_NAME = 'korea_investment';
         const BRANCH = 'gh-pages';
 
-        async function initDashboard() {
-            await loadChart();
+        async function init() {
+            await loadData();
             await loadReports();
         }
 
-        // 1. Load & Render Asset Chart
-        async function loadChart() {
-            const ctx = document.getElementById('assetChart').getContext('2d');
-
+        async function loadData() {
             try {
-                // Fetch daily_summary.json from root (managed by trade.yml copying logic if needed, 
-                // but actually daily_summary.json is committed to root, so accessible via raw.githubusercontent or relative path if deployed)
-                // Since this runs on GH Pages, relative path './daily_summary.json' should work if deployed.
-                // However, daily_summary.json is in the root of the repo (master branch), 
-                // and trade.yml copies index.html to reports/ for deployment.
-                // We ALSO need to copy daily_summary.json to reports/ in trade.yml for this to work relatively.
-                // Or fetch from raw.githubusercontent.com (might have cache issues)
-                // Let's assume we will update trade.yml to copy daily_summary.json too.
+                // Try fetching from root first (dev) or relative if deployed
+                const res = await fetch('./daily_summary.json');
+                if (!res.ok) throw new Error("No summary data");
+                const data = await res.json();
 
-                const response = await fetch('./daily_summary.json');
-                if (!response.ok) throw new Error("No data found");
+                if (data.length === 0) return;
 
-                const data = await response.json();
+                const latest = data[data.length - 1];
+                const prev = data.length > 1 ? data[data.length - 2] : latest;
 
-                // Parse Data
-                const dates = data.map(d => d.date.slice(5)); // MM-DD
-                const assets = data.map(d => d.net_asset);
-                const colors = data.map((d, i) => {
-                    if (i === 0) return '#667eea';
-                    return d.net_asset >= data[i - 1].net_asset ? '#48bb78' : '#f56565';
-                });
+                // 1. Update Cards
+                // Total Asset
+                document.getElementById('totalAsset').innerText = latest.net_asset.toLocaleString() + ' KRW';
 
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: dates,
-                        datasets: [{
-                            label: '총 자산 (KRW)',
-                            data: assets,
-                            borderColor: '#667eea',
-                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            pointBackgroundColor: colors,
-                            pointRadius: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (context) {
-                                        return context.raw.toLocaleString() + ' 원';
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: false,
-                                grid: { color: '#f0f0f0' }
-                            },
-                            x: {
-                                grid: { display: false }
-                            }
-                        }
-                    }
-                });
-            } catch (error) {
-                console.log("Chart load failed:", error);
-                // Show placebo chart or empty state if no data yet
-                ctx.font = '14px Arial';
-                ctx.fillStyle = '#999';
-                ctx.fillText("아직 자산 데이터가 없습니다.", 100, 150);
+                // Asset Change
+                const change = latest.net_asset - prev.net_asset;
+                const changeP = ((change / prev.net_asset) * 100).toFixed(2);
+                const sign = change >= 0 ? '+' : '';
+                const colorClass = change >= 0 ? 'up' : 'down';
+                document.getElementById('assetChange').innerHTML =
+                    `<span class="${colorClass}">${sign}${change.toLocaleString()} (${sign}${changeP}%)</span> vs Yesterday`;
+
+                // Calculate Profit (Approximation from Net Asset vs Seed or provided fields)
+                // Note: daily_summary.json structure: {date, net_asset, total_profit (optional), profit_rate (optional)}
+                // If profit fields missing, we can only show Asset.
+                // Assuming we might record profit later. For now, use Asset Change logic or placeholders if data missing.
+
+                // If daily_summary.py saves profit, we use it. If not, we iterate.
+                // Let's assume daily_summary.json ONLY has date/net_asset for now based on previous code.
+                // I will update daily_summary.py later to include profit info.
+                // For now, let's just duplicate Asset Analysis or leave Profit placeholder.
+
+                document.getElementById('totalProfit').innerText = "N/A"; // Need update in daily_summary.py
+                document.getElementById('profitRate').innerText = "Update Script Needed";
+
+                // 2. Render Chart
+                renderChart(data);
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('totalAsset').innerText = "No Data";
             }
         }
 
-        // 2. Load Reports from GitHub API
+        function renderChart(data) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.5)'); // Blue
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+            const dates = data.map(d => d.date.slice(5));
+            const assets = data.map(d => d.net_asset);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Net Asset',
+                        data: assets,
+                        borderColor: '#60a5fa',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#1e293b',
+                        pointBorderColor: '#60a5fa',
+                        pointBorderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleColor: '#94a3b8',
+                            bodyColor: '#f8fafc',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false, color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { color: '#334155', borderDash: [5, 5] },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
         async function loadReports() {
-            const reportList = document.getElementById('reportList');
-            const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-
+            const list = document.getElementById('reportList');
             try {
-                // Fetch content from gh-pages root
-                const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/?ref=${BRANCH}`);
-                const data = await response.json();
+                const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/?ref=${BRANCH}`);
+                if (!res.ok) throw new Error("API Error");
+                const files = await res.json();
 
-                if (!Array.isArray(data)) throw new Error("Invalid API response");
-
-                const reportFolders = data
-                    .filter(item => item.type === 'dir' && datePattern.test(item.name))
-                    .map(item => item.name)
+                const reports = files
+                    .filter(f => f.type === 'dir' && /^\d{4}-\d{2}-\d{2}$/.test(f.name))
+                    .map(f => f.name)
                     .sort()
                     .reverse();
 
-                if (reportFolders.length === 0) {
-                    reportList.innerHTML = '<li class="loading">생성된 리포트가 없습니다.</li>';
-                } else {
-                    reportList.innerHTML = reportFolders.map(date => `
-                        <li class="report-item">
-                            <a href="${date}/report.html">
-                                <span class="report-date">${date}</span>
-                                <span class="report-arrow">➔</span>
-                            </a>
-                        </li>
-                    `).join('');
+                if (reports.length === 0) {
+                    list.innerHTML = '<div class="loading">No Reports Found</div>';
+                    return;
                 }
-            } catch (error) {
-                console.error('Failed to load reports:', error);
-                reportList.innerHTML = '<li class="loading">리포트 목록을 불러오지 못했습니다.</li>';
+
+                list.innerHTML = reports.map(date => `
+                    <a href="${date}/report.html" class="report-link">
+                        <div class="report-date">${date}</div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary)">View Report &rarr;</div>
+                    </a>
+                `).join('');
+
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = '<div class="loading">Failed to load reports (API Rate Limit or Network)</div>';
             }
         }
 
-        initDashboard();
+        init();
     </script>
 </body>
 
