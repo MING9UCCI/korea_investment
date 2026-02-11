@@ -22,7 +22,7 @@ logging.basicConfig(
     ]
 )
 
-def generate_report(results):
+def generate_report(results, holdings, balance_summary):
     """Generate HTML report stored in date-based directory (Cumulative)."""
     today = datetime.now().strftime("%Y-%m-%d")
     report_dir = os.path.join("reports", today)
@@ -120,21 +120,16 @@ def generate_report(results):
         f.write(html)
     logging.info(f"Cumulative Report generated: {file_path}")
 
-    
-    
     # Send Discord Notification
-    # Group results by market or action type for better readability
-    executed_trades = []
-    for res in results:
-        if "Executed" in res['action']:
-            executed_trades.append(res)
-
-    # Only send if there are executed trades
+    mode_label = "모의투자" if config.KIS_MODE == "VIRTUAL" else "실전투자"
+    current_time_str = datetime.now().strftime("%H:%M")
+    
+    # 1. Trading Activity Section
+    executed_trades = [res for res in results if "Executed" in res['action']]
+    
+    msg = ""
     if executed_trades:
-        mode_label = "모의투자" if config.KIS_MODE == "VIRTUAL" else "실전투자"
-        current_time = datetime.now().strftime("%H:%M")
-        msg = f"⚡ **[{today} {current_time}] 매매 체결 알림 ({mode_label})** ⚡\n\n"
-        
+        msg = f"⚡ **[{today} {current_time_str}] 매매 체결 알림 ({mode_label})** ⚡\n\n"
         msg += "**✅ 체결 내역**\n"
         for res in executed_trades:
             emoji = "🔴 매수" if "BUY" in res['signal'] else "🔵 매도"
@@ -143,17 +138,35 @@ def generate_report(results):
             if res.get('ai_link'):
                 msg += f" ([뉴스보기]({res['ai_link']}))"
             msg += "\n\n"
-            
-        msg += "👉 [상세 리포트/자산 그래프](https://ming9ucci.github.io/korea_investment/)\n"
-        discord_notifier.send_message(msg, type="trading")
-        
-        # Send Chart Images for Executed Trades
-        for res in executed_trades:
-            if res.get('chart_path'):
-                caption = f"📉 {res['name']} ({res['code']}) 매매 차트"
-                discord_notifier.send_message(caption, type="trading", file_path=res['chart_path'])
     else:
-        logging.info("No trades executed. Skipping Discord notification.")
+        msg = f"💤 **[{today} {current_time_str}] 매매 변동 없음 ({mode_label})**\n"
+        msg += "> AI 분석 결과, 매매 기준을 충족하는 종목이 없습니다.\n\n"
+
+    # 2. Portfolio Status Section (Always Included)
+    msg += "**💰 현재 자산 현황**\n"
+    total_asset = int(balance_summary.get('tot_evlu_amt', 0))
+    msg += f"> 총 평가액: **{total_asset:,} KRW**\n"
+    
+    if holdings:
+        msg += "> 보유 종목:\n"
+        for h in holdings:
+             name = h.get('prdt_name', 'Unknown')
+             qty = int(h.get('hldg_qty', 0))
+             profit = float(h.get('evlu_pfls_rt', 0.0))
+             msg += f">   - {name}: {qty}주 ({profit:+.2f}%)\n"
+    else:
+         msg += "> 보유 종목: 없음\n"
+
+    msg += "\n👉 [상세 리포트/자산 그래프](https://ming9ucci.github.io/korea_investment/)\n"
+    
+    discord_notifier.send_message(msg, type="trading")
+    
+    # Send Chart Images for Executed Trades
+    for res in executed_trades:
+        if res.get('chart_path'):
+            caption = f"📉 {res['name']} ({res['code']}) 매매 차트"
+            discord_notifier.send_message(caption, type="trading", file_path=res['chart_path'])
+
 
 def main():
     logging.info("Starting Trading Bot...")
@@ -301,7 +314,12 @@ def main():
         else:
             logging.info("=== US Market is Closed (Holiday/Weekend) ===")
     
-    generate_report(results)
+            logging.info("=== US Market is Closed (Holiday/Weekend) ===")
+    
+    # Fetch final balance for report
+    final_holdings, final_balance = kis.check_balance()
+    
+    generate_report(results, final_holdings, final_balance)
     logging.info("Trading Cycle Completed.")
 
 if __name__ == "__main__":
