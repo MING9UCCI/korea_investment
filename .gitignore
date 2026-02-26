@@ -5,7 +5,13 @@ __pycache__/
 # Environments
 .env
 
-# Token/Logs
+# Token/Logs/Configs
 token.json
 trade.log
 daily_report.html
+trade_logs.db
+system.log
+config/token.json
+config/api_config.yaml
+legacy/
+reports/ai_insight_*.md

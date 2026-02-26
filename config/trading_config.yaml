@@ -1,0 +1,38 @@
+system:
+  use_market_scan: true # true: 거래량 상위 스캔, false: fixed_targets 사용
+  scan_limit: 50        # 거래량 상위 스캔 개수
+  market_type: "DOMESTIC" # "DOMESTIC" (한국투자증권 API 한계 상 미국주식은 추후 확장 구조 마련)
+
+universe:
+  # USE_MARKET_SCAN이 False일 경우 사용할 고정 관심종목
+  fixed_targets:
+    - "005930"  # 삼성전자
+    - "000660"  # SK하이닉스
+    - "035420"  # NAVER
+    - "005380"  # 현대차
+
+# 전략별 파라미터 독립
+strategies:
+  trend_following:
+    active: true
+    params:
+        ma_fast: 5
+        ma_slow: 20
+        # 이평선 돌파 및 지지 여부를 체크할 때 사용
+        take_profit_pct: 7.0  # +7% 도달 시 1차 익절 (50% 청산)
+        stop_loss_pct: -3.0   # -3% 도달 시 전량 손절 (안정성 확보)
+        trailing_stop_pct: -2.0 # 고점 대비 하락 시 청산 (이동 손절)
+  
+  mean_reversion:
+    active: false # 초기 비활성
+    params:
+        rsi_period: 14
+        rsi_lower: 30
+        rsi_upper: 70
+        take_profit_pct: 5.0
+        stop_loss_pct: -2.0
+
+# 최상위 리스크 관리 한계선 (가장 중요)
+risk_management:
+  max_portfolio_weight_per_stock: 0.10  # 단일 종목 최대 투자 비중 (총 자산의 10%)
+  max_daily_loss_pct: -3.0              # 일간 전체 자산 대비 -3% 도달 시 신규 진입 즉각 중단
